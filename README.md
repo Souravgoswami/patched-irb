@@ -1,5 +1,5 @@
 # patched-irb
-This is my customized irb which is aliased with irb.
+This is a patched irb (for Linux).
 
 ![alt text](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshot/a.png)
 
