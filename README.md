@@ -47,4 +47,4 @@ A method called colourize will be available, use that in combination with:
   
 And so on...
 
-*This gem requires `io/console`, `irb`*
+*This requires `io/console`, `irb`*
