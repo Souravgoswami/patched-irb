@@ -5,7 +5,9 @@ This is my customized irb which is aliased with irb.
 When you run this, you are launced in the irb shell. But you can pass multiple gem names as argument.
 
 Example:
+
     `alias irb=./.irb`
+
     `irb securerandom time ruby2d json net/http socket open-uri`
     
     
