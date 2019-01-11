@@ -1,7 +1,7 @@
 # patched-irb
 This is my customized irb which is aliased with irb.
 
-[alt text](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshot/a.png)
+![alt text](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshot/a.png)
 
 When you run this, you are launced in the irb shell. But you can pass multiple gem names as argument.
 
