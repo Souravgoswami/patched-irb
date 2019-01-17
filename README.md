@@ -1,7 +1,7 @@
 # patched-irb
 This is a patched irb (for Linux).
 
-![alt text](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-03-24.png)
+![alt screenshot](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-19-13.png)
 
 The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. You have some features like:
 
@@ -74,5 +74,8 @@ A bit more details about the methods. More or less they are aliased so that if a
   `warn 'hello'.colourize`
   
 And so on...
+
+Here we go:
+![alt screenshot2](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-14-14.png)
 
 *This file requires `io/console`, `irb`*
