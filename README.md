@@ -1,7 +1,7 @@
 # patched-irb
 This is a patched irb (for Linux).
 
-![alt screenshot] (https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-03-24.png)
+![alt text] (https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-03-24.png)
 
 The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. You have some features like:
 
