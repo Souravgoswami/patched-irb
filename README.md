@@ -3,16 +3,39 @@ This is a patched irb (for Linux).
 
 ![alt text](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshot/a.png)
 
-The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument.
+The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. You have some features like:
+
+clear : Clears the screen, just like the linux command. The method clr is aliased with clr.
+
+history : Show the histories from the .irb_history file. irb_history is also an alias for history method.
+
+hist!n : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file.
+
+write_history : Writes history to .irb_history file. The history comes from Readline::HISTORY. save_history is an alias for write_history.
+
+delete_history : Warning! It will delete the .irb_history file. You will clear everything.
+
+printenv : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object.
+
+config : A bigger test! The details comes from RbConfig::CONFIG.
+
+You need to download the file, and run the irb. Use it in the way you feel comfortable.
+You may rename this and move that to /bin/ or /usr/share/bin/ or /opt/ directory.
+
+We would like to rename it and hide it by adding a '.' in front. And alias it with irb.
 
 Example:
+
     `alias irb=./irb`
+    
     `irb securerandom time ruby2d json net/http socket open-uri`
     
     
 So this will load every gem from securerandom to open-uri in a ARGV.each loop, also the outputs are colourized.
 
-The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you can learn ruby efficiently.
+The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you can learn ruby efficiently. You can edit it and remove the `-w` option if you like it that way...
+
+A bit more details about the methods. More or less they are aliased so that if another gem uses the variable, you will still be able to use the alias:
 
 **We have a `clear` method** that you can use directly in irb. Type clear to `clear` the screen. Clear is also aliased with `clr`. You can also type `clr` to `clear` the screen!
 
@@ -21,9 +44,11 @@ The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you c
 **We have a `history` method**, which will load up the history saved at the exit time.
 
  *If you want to see 10 histories, type:*
+ 
       `history 10`
 
  *If you want to see the history in n number of line:*
+ 
       `hist!5`
 
  **If you want to delete all the history, type:**
@@ -33,7 +58,8 @@ The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you c
 
 **For testing purpose, call `printenv` and `config` methods.**
 
-*The history method also yields if a block is given:*
+*The history method also yields if a block is given:*.
+
     `history { |c| puts c }`
     
    
