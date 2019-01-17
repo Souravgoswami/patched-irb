@@ -1,6 +1,6 @@
 #!/usr/bin/ruby -w
 # The GNU General Public License v3.0
-PATCH_VERSION_ = '0.1.1'
+PATCH_VERSION_ = '0.1.2'
 
 require 'irb'
 require 'io/console'
@@ -8,29 +8,29 @@ require 'io/console'
 STDOUT.sync = true
 
 class String
-	@@colours =  [(34..39), (70..75), (136..140), (208..213), (214..219)].map(&:to_a)
-	@@colours.concat(@@colours.map(&:reverse))
+	@@colour_set =  [(34..39), (70..75), (136..140), (208..213), (214..219)].map(&:to_a)
+	@@colour_set.concat(@@colour_set.map(&:reverse))
 
-	def self.colours() @@colours.flatten.map { |temp| ("\e[38;5;#{temp.to_s}m") } end
+	def self.colours() @@colour_set.flatten.map { |temp| ("\e[38;5;#{temp.to_s}m") } end
 
 	def colourize(line_break=true, blink=false)
-		colours, val = @@colours[0], ''
-
+		val = ''
 		each_line do |str|
 			str.strip!
+			colours = @@colour_set[0]
 
 			index, length, colours_length = 0, str.length/colours.length, colours.length
 			length = 1 if length == 0
-
 			val.concat("\e[5m") if blink
+
 			str.each_char.with_index do |c, i|
 				index += 1 if (i % length == 0 && index < colours_length - 1) unless (i == 0 || i == 1)
 				val.concat("\e[38;5;#{colours[index]}m#{c}")
 			end
+
 			val.concat("\e[0m") unless val.empty?
 			val.concat("\n") if line_break
-
-			@@colours.rotate!
+			@@colour_set.rotate!
 		end
 		val.chomp
 	end
@@ -40,11 +40,12 @@ end
 
 ####################################################
 
-T = Time.now
-Histfile = "#{ENV['HOME']}/.irb_history"
+__t__ = Time.now
+__histfile__ = "#{ENV['HOME']}/.irb_history"
 
 begin
-	Width, Height = STDOUT.winsize[1], STDOUT.winsize[0]
+	# We need Width, but no height, but we would like to declare to make it usable in irb
+	Terminal_Height, Terminal_Width = STDOUT.winsize
 rescue Errno::ENOTTY
 	puts "Inappropriate ioctl for device"
 	puts "You should run this in a terminal!".colourize
@@ -55,7 +56,7 @@ def clear() print "\e[3J\e[H\e[2J" if STDOUT.tty? end
 
 def hist!(n=1)
 	begin
-		puts File.readlines(Histfile)[n - 1].to_s.strip.colourize
+		puts File.readlines(__histfile__)[n - 1].to_s.strip.colourize
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
 	rescue Exception => e
@@ -65,20 +66,23 @@ end
 
 def history(n=0)
 	begin
-		histories = File.readlines(Histfile)[0..n - 1]
+		histories = File.readlines(__histfile__)[0..n - 1]
 		unless block_given?
 			histories.each_with_index do |history, i|
 				text = "#{i + 1}\t#{history.strip}"
 				puts text.colourize
-				puts if text.length > Width
+				puts if text.length > Terminal_Width
  			end
 		else
 			histories.each { |c| yield c }
 		end
+
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
+
 	rescue Errno::ENOENT
-		puts "#{Histfile} doesn't exist.".colourize
+		puts "#{__histfile__} doesn't exist.".colourize
+
 	rescue Exception => e
 		return e, e.backtrace
 	end
@@ -87,15 +91,17 @@ end
 
 def delete_history
 	begin
-		puts 'Remove history? (n/Y)'.colourize
-		if STDIN.gets.strip == 'Y'
-			File.delete(Histfile)
-			puts "File #{Histfile} deleted".colourize
+		puts 'Remove history? (N/y)'.colourize
+		if STDIN.gets.downcase.strip == 'y'
+			File.delete(__histfile__)
+			puts "File #{__histfile__} deleted".colourize
 		else
 			puts "Not Deleted".colourize
 		end
+
 	rescue Errno::ENOENT
-		puts "#{Histfile} doesn't exist.".colourize
+		puts "#{__histfile__} doesn't exist.".colourize
+
 	rescue Exception => e
 		return e, e.backtrace
 	end
@@ -108,11 +114,12 @@ def write_history
 		history.delete('write_history')
 		history.delete('save_history')
 
-		File.open(Histfile, 'a') { |file| file.puts(history) }
-		puts "#{history.size} lines written to #{Histfile}".colourize
+		File.open(__histfile__, 'a') { |file| file.puts(history) }
+		puts "#{history.size} lines written to #{__histfile__}".colourize
 
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
+
 	rescue Exception => e
 		return e, e.backtrace
 	end
@@ -129,10 +136,11 @@ alias clr clear
 ARGV.each { |gem|
 	text = "require #{gem}"
 	print text.colourize(false)
-	print ' ' * (Width/2 - text.length)
+	print ' ' * (Terminal_Width/2 - text.length).abs
 
 	begin
-		puts (' # => ' + require(gem).to_s).colourize
+ 		puts("# => #{require(gem)}".colourize)
+
 	rescue LoadError
 		not_found = "! #{gem} not found. Skipping."
 		puts not_found.colourize(true, true)
@@ -141,10 +149,14 @@ ARGV.each { |gem|
 puts unless ARGV.empty?
 
 ARGV.clear
+
+# TODO: Uncomment to Enable TracePoint
+# TracePoint.new(:call) { |tp| p [tp.lineno, tp.defined_class, tp.method_id] }.enable
+
 IRB.start
 
 at_exit do
-	etime = (Time.now - T).to_i
+	etime = (Time.now - __t__).to_i
 	puts "Exiting after #{etime/60} minutes #{etime % 60} seconds.".colourize
 	write_history if Readline::HISTORY.to_a.size > 0
 end
