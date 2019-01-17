@@ -41,7 +41,7 @@ end
 ####################################################
 
 __t__ = Time.now
-__histfile__ = "#{ENV['HOME']}/.irb_history"
+@__histfile__ = "#{ENV['HOME']}/.irb_history"
 
 begin
 	# We need Width, but no height, but we would like to declare to make it usable in irb
@@ -56,7 +56,7 @@ def clear() print "\e[3J\e[H\e[2J" if STDOUT.tty? end
 
 def hist!(n=1)
 	begin
-		puts File.readlines(__histfile__)[n - 1].to_s.strip.colourize
+		puts File.readlines(@__histfile__)[n - 1].to_s.strip.colourize
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
 	rescue Exception => e
@@ -66,7 +66,7 @@ end
 
 def history(n=0)
 	begin
-		histories = File.readlines(__histfile__)[0..n - 1]
+		histories = File.readlines(@__histfile__)[0..n - 1]
 		unless block_given?
 			histories.each_with_index do |history, i|
 				text = "#{i + 1}\t#{history.strip}"
@@ -81,7 +81,7 @@ def history(n=0)
 		puts 'Permission Denied'.colourize
 
 	rescue Errno::ENOENT
-		puts "#{__histfile__} doesn't exist.".colourize
+		puts "#{@__histfile__} doesn't exist.".colourize
 
 	rescue Exception => e
 		return e, e.backtrace
@@ -93,17 +93,17 @@ def delete_history
 	begin
 		puts 'Remove history? (N/y)'.colourize
 		if STDIN.gets.downcase.strip == 'y'
-			File.delete(__histfile__)
-			puts "File #{__histfile__} deleted".colourize
+			File.delete(@__histfile__)
+			puts "File #{@__histfile__} deleted".colourize
 		else
 			puts "Not Deleted".colourize
 		end
 
 	rescue Errno::ENOENT
-		puts "#{__histfile__} doesn't exist.".colourize
+		puts "#{@__histfile__} doesn't exist.".colourize
 
 	rescue Exception => e
-		return e, e.backtrace
+		return e, e.backtrace.join("\n")
 	end
 end
 
@@ -114,8 +114,8 @@ def write_history
 		history.delete('write_history')
 		history.delete('save_history')
 
-		File.open(__histfile__, 'a') { |file| file.puts(history) }
-		puts "#{history.size} lines written to #{__histfile__}".colourize
+		File.open(@__histfile__, 'a') { |file| file.puts(history) }
+		puts "#{history.size} lines written to #{@__histfile__}".colourize
 
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
