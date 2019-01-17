@@ -157,6 +157,7 @@ IRB.start
 
 at_exit do
 	etime = (Time.now - __t__).to_i
-	puts "Exiting after #{etime/60} minutes #{etime % 60} seconds.".colourize
+	minutes, seconds = etime/60, etime % 60
+	puts "Exiting after #{minutes} #{minutes == 1 ? 'minute' : 'minutes' } #{seconds} #{seconds == 1 ? 'second' : 'seconds' }.".colourize
 	write_history if Readline::HISTORY.to_a.size > 0
 end
