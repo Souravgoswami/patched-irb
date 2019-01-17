@@ -1,121 +1,140 @@
 #!/usr/bin/ruby -w
+# The GNU General Public License v3.0
+PATCH_VERSION_ = '0.1.1'
+
 require 'irb'
 require 'io/console'
 
 STDOUT.sync = true
 
-T = Time.now
-Histfile = "#{ENV['HOME']}/.irb_history"
-Width, Height = STDOUT.winsize[1], STDOUT.winsize[0]
-
 class String
-	Colours =  [(40..44), (70..75), (208..213), (136..140)]
+	@@colours =  [(34..39), (70..75), (136..140), (208..213), (214..219)].map(&:to_a)
+	@@colours.concat(@@colours.map(&:reverse))
+
+	def self.colours() @@colours.flatten.map { |temp| ("\e[38;5;#{temp.to_s}m") } end
+
 	def colourize(line_break=true, blink=false)
-		colours = Colours[0].to_a
-		colours.reverse! if [true, false].sample
-		val = ''
-		self.to_s.each_line do |str|
+		colours, val = @@colours[0], ''
+
+		each_line do |str|
 			str.strip!
+
 			index, length, colours_length = 0, str.length/colours.length, colours.length
 			length = 1 if length == 0
 
+			val.concat("\e[5m") if blink
 			str.each_char.with_index do |c, i|
-				index += 1 if (i % length == 0 && (index < colours_length - 1)) unless (i == 0 || i == 1)
-				val += "\e[5m" if blink
-				val += "\e[38;5;#{colours[index]}m#{c}\033[0m"
+				index += 1 if (i % length == 0 && index < colours_length - 1) unless (i == 0 || i == 1)
+				val.concat("\e[38;5;#{colours[index]}m#{c}")
 			end
-			val += "\n" if line_break
-		Colours.rotate!
+			val.concat("\e[0m") unless val.empty?
+			val.concat("\n") if line_break
+
+			@@colours.rotate!
 		end
-		val
+		val.chomp
 	end
+
 	alias to_colour colourize
 end
 
-class Object
-	def clear() print "\e[H\e[J\e[0m" if STDOUT.tty? end
+####################################################
 
-	def hist!(n=1)
-		begin
-			puts File.readlines(Histfile)[n - 1].to_s.colourize
-		rescue Errno::EACCES
-			puts 'Permission Denied'.colourize
-		rescue Exception => e
-			return e, e.backtrace
-		end
-	end
+T = Time.now
+Histfile = "#{ENV['HOME']}/.irb_history"
 
-	def history(n=0)
-		begin
-			histories = File.readlines(Histfile)[0..n - 1]
-			unless block_given?
-				histories.each_with_index { |history, i| puts "#{i + 1}\t#{history}".colourize }
-			else
-				histories.each { |c| yield c }
-			end
-		rescue Errno::EACCES
-			puts 'Permission Denied'.colourize
-		rescue Errno::ENOENT
-			puts "#{Histfile} doesn't exist.".colourize
-		rescue Exception => e
-			return e, e.backtrace
-		end
-		nil
-	end
-
-	def delete_history
-		begin
-			puts 'Remove history? (n/Y)'.colourize
-			if STDIN.gets.strip == 'Y'
-				File.delete(Histfile)
-				puts "File #{Histfile} deleted".colourize
-			else
-				puts "Not Deleted".colourize
-			end
-		rescue Errno::ENOENT
-			puts "#{Histfile} doesn't exist.".colourize
-		rescue Exception => e
-			return e, e.backtrace
-		end
-	end
-
-	def write_history
-		begin
-			history = Readline::HISTORY.to_a
-
-			history.delete('write_history')
-			history.delete('save_history')
-
-			File.open(Histfile, 'a') { |file| file.puts(history) }
-			puts "#{history.size} lines written to #{Histfile}".colourize
-
-		rescue Errno::EACCES
-			puts 'Permission Denied'.colourize
-		rescue Exception => e
-			return e, e.backtrace
-		end
-		nil
-	end
-
-	def printenv() puts ENV.to_a.join("\n").colourize ; nil end
-
-	def printenv2() RbConfig::CONFIG.to_a.each { |c| puts "#{c[0]} => #{c[1]}".colourize } ; nil end
-
-	alias irb_history history
-	alias save_history write_history
-	alias clr clear
+begin
+	Width, Height = STDOUT.winsize[1], STDOUT.winsize[0]
+rescue Errno::ENOTTY
+	puts "Inappropriate ioctl for device"
+	puts "You should run this in a terminal!".colourize
+rescue Exception
 end
+
+def clear() print "\e[3J\e[H\e[2J" if STDOUT.tty? end
+
+def hist!(n=1)
+	begin
+		puts File.readlines(Histfile)[n - 1].to_s.strip.colourize
+	rescue Errno::EACCES
+		puts 'Permission Denied'.colourize
+	rescue Exception => e
+		return e, e.backtrace
+	end
+end
+
+def history(n=0)
+	begin
+		histories = File.readlines(Histfile)[0..n - 1]
+		unless block_given?
+			histories.each_with_index do |history, i|
+				text = "#{i + 1}\t#{history.strip}"
+				puts text.colourize
+				puts if text.length > Width
+ 			end
+		else
+			histories.each { |c| yield c }
+		end
+	rescue Errno::EACCES
+		puts 'Permission Denied'.colourize
+	rescue Errno::ENOENT
+		puts "#{Histfile} doesn't exist.".colourize
+	rescue Exception => e
+		return e, e.backtrace
+	end
+	nil
+end
+
+def delete_history
+	begin
+		puts 'Remove history? (n/Y)'.colourize
+		if STDIN.gets.strip == 'Y'
+			File.delete(Histfile)
+			puts "File #{Histfile} deleted".colourize
+		else
+			puts "Not Deleted".colourize
+		end
+	rescue Errno::ENOENT
+		puts "#{Histfile} doesn't exist.".colourize
+	rescue Exception => e
+		return e, e.backtrace
+	end
+end
+
+def write_history
+	begin
+		history = Readline::HISTORY.to_a
+
+		history.delete('write_history')
+		history.delete('save_history')
+
+		File.open(Histfile, 'a') { |file| file.puts(history) }
+		puts "#{history.size} lines written to #{Histfile}".colourize
+
+	rescue Errno::EACCES
+		puts 'Permission Denied'.colourize
+	rescue Exception => e
+		return e, e.backtrace
+	end
+	nil
+end
+
+def printenv() puts ENV.to_a.join("\n").colourize ; nil end
+def config() RbConfig::CONFIG.to_a.each { |c| puts "#{c[0]} => #{c[1]}".colourize } ; nil end
+
+alias irb_history history
+alias save_history write_history
+alias clr clear
 
 ARGV.each { |gem|
 	text = "require #{gem}"
 	print text.colourize(false)
+	print ' ' * (Width/2 - text.length)
+
 	begin
-		bool = require(gem) == true ? ' => true' : '=> false'
-		print(' ' * (Width/2 - (text.length + bool.length)))
-		puts bool.colourize
+		puts (' # => ' + require(gem).to_s).colourize
 	rescue LoadError
-		not_found = "#{gem} not found. Skipping."
-		print ' ' * (Width/2 - (text.length + not_found.length - (not_found.length/2)))
+		not_found = "! #{gem} not found. Skipping."
 		puts not_found.colourize(true, true)
 	end
 }
@@ -127,6 +146,5 @@ IRB.start
 at_exit do
 	etime = (Time.now - T).to_i
 	puts "Exiting after #{etime/60} minutes #{etime % 60} seconds.".colourize
-
 	write_history if Readline::HISTORY.to_a.size > 0
 end
