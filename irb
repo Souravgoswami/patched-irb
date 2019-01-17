@@ -115,7 +115,7 @@ def write_history
 		history.delete('save_history')
 
 		File.open(@__histfile__, 'a') { |file| file.puts(history) }
-		puts "#{history.size} lines written to #{@__histfile__}".colourize
+		puts "#{history.size} #{history.size == 1 ? 'line has been' : 'lines have been'} written to #{@__histfile__}".colourize
 
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
