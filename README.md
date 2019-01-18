@@ -3,26 +3,32 @@ This is a patched irb (for Linux).
 
 ![alt screenshot](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-19-13.png)
 
-The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. You have some features like:
+The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. A common  function that irb lacks in loading history:
 
-clear : Clears the screen, just like the linux command. The method clr is aliased with clr.
+*Load history:* Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc.  shell)!
 
-history : Show the histories from the .irb_history file. irb_history is also an alias for history method.
+You have some methods like (note this are not a Ruby feature, you just get it with patched-irb):
 
-hist!n : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file.
+*clear* : Right `clear` clears the screen just like just like the linux command! The method clr is aliased with clr.
 
-write_history : Writes history to .irb_history file. The history comes from Readline::HISTORY. save_history is an alias for write_history.
+*history* : Show the histories from the .irb_history file. irb_history is also an alias for history method.
 
-delete_history : Warning! It will delete the .irb_history file. You will clear everything.
+*hist!n* : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file.
 
-printenv : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object.
+*write_history* : Writes history to .irb_history file. The history comes from Readline::HISTORY. save_history is an alias for write_history.
 
-config : A bigger test! The details comes from RbConfig::CONFIG.
+*delete_history* : Warning! It will delete the .irb_history file. You will clear everything.
+
+*printenv* : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object.
+
+*config* : A bigger test! The details comes from RbConfig::CONFIG.
+
+**How to use patched-irb:**
 
 You need to download the file, and run the irb. Use it in the way you feel comfortable.
 You may rename this and move that to /bin/ or /usr/share/bin/ or /opt/ directory.
 
-We would like to rename it and hide it by adding a '.' in front. And alias it with irb.
+We would like to rename it and hide it by adding a `.` in front. And alias it with irb.
 
 Example:
 
@@ -30,10 +36,12 @@ Example:
     
     `irb securerandom time ruby2d json net/http socket open-uri`
     
+This loads irb with securerandom time ruby2d json net/http socket open-uri gems!
     
-So this will load every gem from securerandom to open-uri in a ARGV.each loop, also the outputs are colourized.
+We used an ARGV.each {} loop to require the gems, also the outputs are colourized.
 
 The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you can learn ruby efficiently. You can edit it and remove the `-w` option if you like it that way...
+
 
 A bit more details about the methods. More or less they are aliased so that if another gem uses the variable, you will still be able to use the alias:
 
