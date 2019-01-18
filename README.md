@@ -9,19 +9,26 @@ The idea is When you run this, you are launched in the irb shell. But you can pa
 
 You have some methods like (note this are not a Ruby feature, you just get it with patched-irb):
 
-*clear* : Right, `clear` clears the screen just like just like the linux command! The method clr is aliased with clr.
+*clear* : Right, `clear` clears the screen just like just like the Linux command! The method clr is aliased with clear!.
 
-*history* : Show the histories from the .irb_history file. irb_history is also an alias for history method.
+*erase* : It will erase the terminal except the line you are in. It's alised with erase!.
 
-*hist!n* : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file.
+*history* : Show the histories from the .irb_history file. history! is also an alias for history method.
 
-*write_history* : Writes history to .irb_history file. The history comes from Readline::HISTORY. save_history is an alias for write_history.
+*hist!n* : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file. It's aliases with hist. You run `hist(5)` or `hist 5` for the same job that hist!5 will do!
 
-*delete_history* : Warning! It will delete the .irb_history file. You will clear everything.
+*write_history* : Writes history to .irb_history file. The history comes from Readline::HISTORY. write_history! is an alias for write_history.
 
-*printenv* : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object.
+*delete_history* : Warning! It will delete the .irb_history file. You will clear everything. It's not aliased with anything...
 
-*config* : A bigger test! The details comes from RbConfig::CONFIG.
+*printenv* : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object. It doesn't have any alias method.
+
+*config* : A bigger test! The details comes from RbConfig::CONFIG. it's not aliased either...
+
+**Patched String Class :** Yes, we have the String class monkey patched so you can use `colourize` method on every String object. `colourize` is aliased with `to_colour`.
+
+Note: You can easily override the above methods. You can do `clear = 5` and you can't use clear(). It will return 5! But We have aliased most of the methods so you can use them alternatively.
+
 
 **How to use patched-irb:**
 
@@ -87,3 +94,5 @@ Here we go:
 ![alt screenshot2](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/Screenshot%20from%202019-01-18%2000-14-14.png)
 
 *This file requires `io/console`, `irb`*
+
+Please give us more ideas about what to add and inform us about bugs!
