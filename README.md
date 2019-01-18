@@ -9,7 +9,7 @@ The idea is When you run this, you are launched in the irb shell. But you can pa
 
 You have some methods like (note this are not a Ruby feature, you just get it with patched-irb):
 
-*clear* : Right `clear` clears the screen just like just like the linux command! The method clr is aliased with clr.
+*clear* : Right, `clear` clears the screen just like just like the linux command! The method clr is aliased with clr.
 
 *history* : Show the histories from the .irb_history file. irb_history is also an alias for history method.
 
