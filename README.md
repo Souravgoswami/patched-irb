@@ -3,27 +3,27 @@ This is a patched irb (for Linux).
 
 ![alt screenshot](https://raw.githubusercontent.com/Souravgoswami/patched-irb/master/screenshots/sc2.jpg)
 
-The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. A common  function that irb lacks in loading history:
+The idea is When you run this, you are launched in the irb shell. But you can pass multiple gem names as argument. A common  function that irb lacks is loading history:
 
-*Load history:* Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc.  shell)!
+*Load history:* Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc. shell)!
 
 You have some methods like (note this are not a Ruby feature, you just get it with patched-irb):
 
 *clear* : Right, `clear` clears the screen just like just like the Linux command! The method clr is aliased with clear!.
 
-*erase* : It will erase the terminal except the line you are in. It's alised with erase!.
+*erase* : It will erase the terminal except for the line you are in. It's aliased with erase!.
 
 *history* : Show the histories from the .irb_history file. history! is also an alias for history method.
 
-*hist!n* : Shows you the history in the nth line. Example: hist!5 will show you the history that's in the line 5 in .irb_history file. It's aliases with hist. You run `hist(5)` or `hist 5` for the same job that hist!5 will do!
+*hist!n* : Shows you the history in the nth line. Example: hist!5 will show you the history that's in line 5 in the .irb_history file. It's aliasesd with hist. You run `hist(5)` or `hist 5` for the same job that hist!5 will do!
 
 *write_history* : Writes history to .irb_history file. The history comes from Readline::HISTORY. write_history! is an alias for write_history.
 
 *delete_history* : Warning! It will delete the .irb_history file. You will clear everything. It's not aliased with anything...
 
-*printenv* : Just to test stuffs out... You will see some system details and Ruby interpreter details. The details comes from ENV object. It doesn't have any alias method.
+*printenv* : Just to test stuff out... You will see some system details and Ruby interpreter details. The detail comes from ENV object. It doesn't have any alias method.
 
-*config* : A bigger test! The details comes from RbConfig::CONFIG. it's not aliased either...
+*config* : A bigger test! The details come from RbConfig::CONFIG. it's not aliased either...
 
 **Patched String Class :** Yes, we have the String class monkey patched so you can use `colourize` method on every String object. `colourize` is aliased with `to_colour`.
 
@@ -54,7 +54,7 @@ A bit more details about the methods. More or less they are aliased so that if a
 
 **We have a `clear` method** that you can use directly in irb. Type clear to `clear` the screen. Clear is also aliased with `clr`. You can also type `clear!` to `clear` the screen!
 
-**The `erase` method erases the terminal except the line the cursor is on!**
+**The `erase` method erases the terminal except for the line the cursor is in!**
 
 **NOTE: The session will be saved in a file named `.irb_history` while you exit irb. To skip this, use `exit!`**
 
