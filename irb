@@ -61,13 +61,13 @@ end
 @history_size = Readline::HISTORY.size
 
 # clear() clears the terminal, and resets the cursor position to the first line.
-def clear() print "\e[H\e[2J" if STDOUT.tty? end
+def clear(*arg) print "\e[H\e[2J" if STDOUT.tty? end
 
 # Erase erases the screen. It doesn't reset the cursor position!
-def erase() print "\e[2J" if STDOUT.tty? end
+def erase(*arg) print "\e[2J" if STDOUT.tty? end
 
 # Get the histories. hist!(n) where the n implies the number of line.
-def hist!(n=1)
+def hist!(n=1, *arg)
 	begin
 		puts File.readlines(@__histfile__)[n - 1].to_s.colourize
 
@@ -80,7 +80,7 @@ def hist!(n=1)
 	nil
 end
 
-def history(n=0)
+def history(n=0, *arg)
 	begin
 		histories = File.readlines(@__histfile__)[0..n - 1]
 		unless block_given?
@@ -104,7 +104,7 @@ def history(n=0)
 	nil
 end
 
-def delete_history
+def delete_history(*arg)
 	begin
 		puts 'Remove history? (N/y)'.colourize
 		if STDIN.gets.downcase.strip == 'y'
@@ -123,7 +123,7 @@ def delete_history
 	nil
 end
 
-def write_history
+def write_history(*arg)
 	begin
 		histories = Readline::HISTORY.to_a[@history_size..-1].map(&:strip)
 		histories.delete('write_history')
@@ -141,8 +141,8 @@ def write_history
 	nil
 end
 
-def printenv() puts ENV.each { |temp| puts "#{temp[0]} => #{temp[1]}".colourize } ; nil end
-def config() RbConfig::CONFIG.to_a.each { |c| puts "#{c[0]} => #{c[1]}".colourize } ; nil end
+def printenv(*arg) puts ENV.each { |temp| puts "#{temp[0]} => #{temp[1]}".colourize } ; nil end
+def config(*arg) RbConfig::CONFIG.to_a.each { |c| puts "#{c[0]} => #{c[1]}".colourize } ; nil end
 
 # Aliases
 alias clear! clear
@@ -151,6 +151,7 @@ alias history! history
 alias hist hist!
 alias write_history! write_history
 
+# require gems!
 ARGV.each_with_index { |gem, temp|
 	text = "require #{gem}"
 	printf("%02d  ", temp + 1)
