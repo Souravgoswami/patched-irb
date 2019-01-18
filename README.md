@@ -7,7 +7,7 @@ The idea is When you run this, you are launched in the irb shell. But you can pa
 
 *Load history:* Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc. shell)!
 
-You have some methods like (note this are not a Ruby feature, you just get it with patched-irb):
+You have some methods like (note these are not Ruby features, you just get it with patched-irb):
 
 *clear* : Right, `clear` clears the screen just like just like the Linux command! The method clr is aliased with clear!.
 
