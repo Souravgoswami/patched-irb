@@ -52,9 +52,11 @@ The file has `#!/usr/bin/ruby -w`, which will turn on all the warnings. So you c
 
 A bit more details about the methods. More or less they are aliased so that if another gem uses the variable, you will still be able to use the alias:
 
-**We have a `clear` method** that you can use directly in irb. Type clear to `clear` the screen. Clear is also aliased with `clr`. You can also type `clr` to `clear` the screen!
+**We have a `clear` method** that you can use directly in irb. Type clear to `clear` the screen. Clear is also aliased with `clr`. You can also type `clear!` to `clear` the screen!
 
-**The session will be saved in a file named `.irb_history` while you exit irb. To skip this, use `exit!`**
+**The `erase` method erases the terminal except the line the cursor is on!**
+
+**NOTE: The session will be saved in a file named `.irb_history` while you exit irb. To skip this, use `exit!`**
 
 **We have a `history` method**, which will load up the history saved at the exit time.
 
@@ -95,4 +97,4 @@ Here we go:
 
 *This file requires `io/console`, `irb`*
 
-Please give us more ideas about what to add and inform us about bugs!
+*Please give us more ideas about what to add and inform us about bugs!
