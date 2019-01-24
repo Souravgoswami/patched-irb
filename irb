@@ -1,14 +1,34 @@
 #!/usr/bin/ruby -w
 # The GNU General Public License v3.0
-PATCH_VERSION_ = '0.1.4'
+PATCH_VERSION_ = '0.1.5'
 
 require 'irb'
 require 'io/console'
 
 STDOUT.sync = true
 
+# Handy QuickTools for quick calculations!
+module QuickTools
+	class << self
+		def colourize(string) string.colourize end
+		def sort_word(string) string.chars.sort.join end
+		def reverse_sort_word(string) sort_word(string).reverse end
+		def camelize(string) string.split(' ').map(&:capitalize).join(' ') end
+		def factorial(number) (2..number).reduce(&:*) end
+		def permutation(argument) argument.to_s.chars.permutation.map(&:join) end
+
+		def benchmark(*all_methods)
+			require 'benchmark' unless defined?(Benchmark)
+			all_methods.each do |method|
+				Benchmark.benchmark { |b| b.report("#{method.to_s}") { method } }
+			end
+		nil
+		end
+	end
+end
+
 class String
-	@@colour_set =  [(34..39), (70..75), (136..140), (208..213), (214..219)].map(&:to_a)
+	@@colour_set =  [(34..39), (208..213), (70..75), (136..140), (214..219), (40..45)].map(&:to_a)
 	@@colour_set.concat(@@colour_set.map(&:reverse))
 
 	def self.colours() @@colour_set.flatten.map { |temp| ("\e[38;5;#{temp.to_s}m") } end
@@ -21,10 +41,12 @@ class String
 			index, length, colours_length = 0, str.length/colours.length, colours.length
 			length = 1 if length == 0
 			val.concat("\e[5m") if blink
+			str_len, i = str.length, 0
 
-			str.each_char.with_index do |c, i|
+			while i < str_len do
 				index += 1 if (i % length == 0 && index < colours_length - 1) unless (i == 0 || i == 1)
-				val.concat("\e[38;5;#{colours[index]}m#{c}")
+				val.concat("\e[38;5;#{colours[index]}m#{str[i]}")
+				i += 1
 			end
 
 			val.concat("\e[0m") unless val.empty?
@@ -35,6 +57,13 @@ class String
 	end
 
 	alias to_colour colourize
+end
+
+####################################################
+if ARGV.include?('-v') || ARGV.include?('--version')
+	puts "IRB VERSION:\t#{IRB::VERSION}".colourize
+	puts "PATCH VERSION: #{PATCH_VERSION_}".colourize
+	exit 0
 end
 
 ####################################################
@@ -153,7 +182,7 @@ alias write_history! write_history
 
 # require gems!
 ARGV.each_with_index { |gem, temp|
-	text = "require #{gem}"
+	text = "require '#{gem}'"
 	printf("%02d  ", temp + 1)
 	print text.colourize(false)
 	print ' ' * ((Terminal_Width/3 - text.length).abs + 1)
@@ -161,9 +190,8 @@ ARGV.each_with_index { |gem, temp|
 	begin
  		puts("# => #{require(gem)}".colourize)
 
-	rescue LoadError
-		not_found = "! #{gem} not found. Skipping."
-		puts not_found.colourize(true, true)
+	rescue LoadError => e
+		puts "! #{e}".colourize(true, true)
 	end
 }
 puts unless ARGV.empty?
@@ -173,7 +201,7 @@ ARGV.clear
 # TODO: Uncomment to Enable TracePoint before starting IRB
 # TracePoint.new(:call) { |tp| p [tp.lineno, tp.defined_class, tp.method_id] }.enable
 
-IRB.start
+IRB.start(__FILE__)
 
 at_exit do
 	etime = (Time.now - __t__).to_i
