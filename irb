@@ -105,7 +105,7 @@ end
 # Get the histories. hist!(n) where the n implies the number of line.
 def hist!(n=1, return_value=false, *arg)
 	begin
-		data = File.readlines(@__histfile__)[n - 1]
+		data = File.readlines(@__histfile__)[n.to_i - 1]
 		unless return_value then puts data.to_s.colourize else return data end
 
 	rescue Errno::ENOENT
@@ -134,7 +134,7 @@ end
 
 def history(n=0, return_val=false, *arg)
 	begin
-		histories = File.readlines(@__histfile__)[0..n - 1]
+		histories = File.readlines(@__histfile__)[0..n.to_i - 1]
 
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
