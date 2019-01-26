@@ -22,7 +22,7 @@ module QuickTools
 			all_methods.each do |method|
 				Benchmark.benchmark { |b| b.report("#{method.to_s}") { method } }
 			end
-		nil
+			nil
 		end
 	end
 end
