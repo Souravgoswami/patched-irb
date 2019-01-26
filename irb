@@ -128,7 +128,7 @@ def eval_hist!(n=1, *arg)
 		Readline::HISTORY << line
 		eval(line)
 	elsif line.start_with?('eval_hist')
-		puts "Uh oh! Calling method eval_history! recursively is not allowed.".colourize
+		puts 'Uh oh! Calling method eval_history! recursively is not allowed.'.colourize
 	end
 end
 
