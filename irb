@@ -1,9 +1,7 @@
 #!/usr/bin/ruby -w
 # The GNU General Public License v3.0
-PATCH_VERSION_ = '0.1.6'
-
-require 'irb'
-require 'io/console'
+PATCH_VERSION_ = '0.2.0'
+%w(irb irb/completion io/console).each { |gem| require(gem) }
 
 STDOUT.sync = true
 
@@ -14,45 +12,69 @@ module QuickTools
 		def sort_word(arg) arg.to_s.chars.sort.join end
 		def reverse_sort_word(arg) sort_word(arg).reverse end
 		def camelize(string) string.split(' ').map(&:capitalize).join(' ') end
-		def factorial(number) (2..number.to_i).reduce(&:*) end
+		def factorial(number) (2..number.to_i).reduce(:*) end
 		def permutation(argument) argument.to_s.chars.permutation.map(&:join) end
+
+		def prime(range=100)
+			(numbers = (2..range).to_a.unshift(nil, nil)).each do |num|
+				next if num.nil?
+				return numbers.compact if (sqr = num ** 2) > range
+				sqr.step(range, num) { |x| numbers[x] = nil }
+			end
+		end
+
+		def prime?(n=19) prime(n).include?(n) end
 
 		def benchmark(*all_methods)
 			require 'benchmark' unless defined?(Benchmark)
-			all_methods.each do |method|
-				Benchmark.benchmark { |b| b.report("#{method.to_s}") { method } }
-			end
+			all_methods.each { |method| Benchmark.benchmark { |b| b.report("#{method.to_s}") { eval(method.to_s) } } }
 			nil
+		end
+
+		def pi(n=1_000)
+			q, r, t, k, m, x, str = 1, 0, 1, 1, 3, 3, ''
+
+			if 4 * q + r - t < m * t
+				str.concat(m.to_s)
+				q, r, m = 10 * q, 10 * (r - m * t), (10 * (3 * q + r)) / t - 10 * m
+			else
+				q, r, t, k, m, x = q * k, (2 * q + r) * x, t * x, k + 1, (q * (7 * k + 2) + r * x) / (t * x), x + 2
+			end while str.length < n
+
+			str[1, 0] = '.'
+			str
 		end
 	end
 end
 
 class String
-	@@colour_set =  [(34..39), (208..213), (70..75), (136..140), (214..219), (40..45)].map(&:to_a)
-	@@colour_set.concat(@@colour_set.map(&:reverse))
+	@@colour_set =  [ (34..39), (208..213), (70..75), (136..140), (214..219), (40..45),
+		[154, 184, 208, 203, 198, 164, 129, 92], [63, 33, 39, 44, 49, 83, 118],
+		[40,41,42,43,211, 210, 209, 208] ].map(&:to_a)
 
-	def self.colours() @@colour_set.flatten.map { |temp| ("\e[38;5;#{temp.to_s}m") } end
+	@@colour_set.concat(@@colour_set.map(&:reverse))
 
 	def colourize(line_break=true, blink=false)
 		val = ''
+		val.concat("\e[5m") if blink
+
 		each_line do |str|
 			colours = @@colour_set[0]
 
-			index, length, colours_length = 0, str.length/colours.length, colours.length
+			index, length, colours_length = 0, str.length / colours.size, colours.size
 			length = 1 if length == 0
-			val.concat("\e[5m") if blink
-			str_len, i = str.length, 0
+			str_len, i = str.length, -1
 
 			while i < str_len do
-				index += 1 if (i % length == 0 && index < colours_length - 1) unless (i == 0 || i == 1)
-				val.concat("\e[38;5;#{colours[index]}m#{str[i]}")
-				i += 1
+				index += 1 if (i % length == 0 && index < colours_length - 1) && i > 1
+				val.concat("\e[38;5;#{colours[index]}m#{str[i += 1]}")
 			end
 
-			val.concat("\e[0m") unless val.empty?
 			val.concat("\n") if line_break
 			@@colour_set.rotate!
 		end
+
+		val.concat("\e[0m") unless val.empty?
 		val.chomp
 	end
 
@@ -61,9 +83,9 @@ end
 
 ####################################################
 if ARGV.include?('-v') || ARGV.include?('--version')
-	puts "IRB VERSION:\t#{IRB::VERSION}".colourize
-	puts "PATCH VERSION: #{PATCH_VERSION_}".colourize
-	puts "#{RbConfig::CONFIG['RUBY_VERSION_NAME']}".capitalize.colourize
+	print "IRB VERSION:\t#{IRB::VERSION}".colourize
+	print "IRB Patch Version: #{PATCH_VERSION_}".colourize
+	print  "Ruby Version #{RUBY_VERSION} #{RUBY_PLATFORM}".capitalize.colourize
 	exit 0
 end
 
@@ -92,7 +114,7 @@ end
 
 # clear() clears the terminal, and resets the cursor position to the first line.
 def clear(*arg)
-	print "\e[0m\e[H\e[2J" if STDOUT.tty?
+	print "\e[0m\e[3J\e[H\e[2J" if STDOUT.tty?
 	:clear
 end
 
@@ -135,6 +157,7 @@ end
 def history(n=0, return_val=false, *arg)
 	begin
 		histories = File.readlines(@__histfile__)[0..n.to_i - 1]
+		return histories if return_val
 
 	rescue Errno::EACCES
 		puts 'Permission Denied'.colourize
@@ -147,13 +170,58 @@ def history(n=0, return_val=false, *arg)
 
 	else
 		unless block_given?
-			i = 0
-			puts histories.map {  |history| i += 1 ; "#{i}    #{history.strip}".colourize }
+			puts histories.map.with_index {  |history, i| "#{i + 1}    #{history.strip}".colourize(false) }
 		else
 			histories.each { |c| yield c }
 		end
 	end
 	nil
+end
+
+def eval_all!
+	h, i = history(0, true), 0
+
+	puts "\e[1;30mWarning!This will iterate over all the histories and evalualte each one. Type 'y' to confirm.\e[0m"
+
+	unless STDIN.gets.strip == "y"
+		puts "\e[1;34mSkipping\e[0m"
+		return
+	end
+
+	while i < h.size
+		begin
+			exec = h[i].to_s.strip
+
+			if exec == 'eval_all!'
+				i += 1
+				next
+			end
+
+			puts ("-" * Terminal_Width).colourize
+			print "#{sprintf("%02d", i + 1)}> #{exec}".colourize
+			print "\e[4m"
+			puts "[Press Any key to Continue. Press Space to skip]".colourize
+			print "\e[0m"
+
+			i += 1
+
+			if STDIN.getch == " "
+				print "Skipping...".colourize
+				next
+			end
+
+			print (val = eval(exec)) ? "=> #{val}".colourize : "=> nil".colourize
+			print ("-" * Terminal_Width).colourize
+
+		rescue Interrupt
+			exit! 0
+
+		rescue Exception => e
+			puts "\e[1;31m#{e}"
+			i += 1
+			retry
+		end
+	end
 end
 
 def get_history_size(*arg) puts "#{File.size(@__histfile__).to_s.reverse.gsub(/\d{1,3}/).to_a.join(',').reverse} bytes".colourize if File.readable?(@__histfile__) end
@@ -200,21 +268,26 @@ alias hist hist!
 alias eval_hist eval_hist!
 alias write_history! write_history
 
-# require gems!
-ARGV.each_with_index { |gem, temp|
-	text = "require '#{gem}'"
-	printf("%02d  ", temp + 1)
-	print text.colourize(false)
-	print ' ' * ((Terminal_Width/3 - text.length).abs + 1)
+# Check if ARGV[0] is a file or not. If that's a file, run it just like irb, or load ruby gems!
+if File.readable?(ARGV[0].to_s)
+	IRB.start(ARGV[0])
+else
+	# require gems from arguments!
+	ARGV.each_with_index { |gem, temp|
+		text = "require '#{gem}'"
+		print((sprintf("%02d  ", temp + 1) + text).colourize(false))
+		print ' ' * ((Terminal_Width/3 - text.length).abs + 1)
 
-	begin
- 		puts("# => #{require(gem)}".colourize)
-
-	rescue LoadError => e
-		puts "! #{e}".colourize(true, true)
-	end
-}
-puts unless ARGV.empty?
+		print(
+			begin
+	 			"# => #{require(gem)}".colourize
+			rescue LoadError => e
+				"! #{e}".colourize(true, true)
+			end
+		)
+	}
+	puts
+end unless ARGV.empty?
 
 ARGV.clear
 
@@ -223,9 +296,10 @@ ARGV.clear
 
 IRB.start(__FILE__)
 
+# use exit! to avoid writing histories
 at_exit do
 	etime = (Time.now - __t__).to_i
-	minutes, seconds = etime/60, etime % 60
-	puts "Exiting after #{minutes} #{minutes == 1 ? 'minute' : 'minutes' } #{seconds} #{seconds == 1 ? 'second' : 'seconds' }.".colourize
+	hours, minutes, seconds = etime / 3600, etime % 3600 / 60, etime % 60
+	print "Exiting after #{hours} #{hours == 1 ? 'hour' : 'hours'} #{minutes} #{minutes == 1 ? 'minute' : 'minutes' } #{seconds} #{seconds == 1 ? 'second' : 'seconds' }.".colourize if etime > 0
 	write_history
 end
