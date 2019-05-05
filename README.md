@@ -6,8 +6,10 @@ This is a Patched IRB for Linux :penguin:
 The idea is When you run this, you are launched in the irb shell :heart:. In patched IRB you can pass multiple gem names as argument, you can load up histories, clear the terminal, colourize strings, use QuickTools for some calculations! Also, just like regular IRB you can pass Patched IRB a file.
 
 ## Usage 💎
-+ Load history: Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc. shell)!
+### Load history:
+Press the up arrow key and down arrow key to browse previous histories (as you would do in your BASH/ZSH/etc. shell)!
 
+### Methods:
 + clear: Right, `clear` clears the screen just like just like the Linux command! `clear` will also reset escape characters.  The method clr is aliased with `clear!`.
 
 
