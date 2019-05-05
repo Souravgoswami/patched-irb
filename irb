@@ -181,13 +181,7 @@ end
 def eval_all!
 	h, i = history(0, true), 0
 
-	puts "\e[1;30mWarning!This will iterate over all the histories and evalualte each one. Type 'y' to confirm.\e[0m"
-
-	unless STDIN.gets.strip == "y"
-		puts "\e[1;34mSkipping\e[0m"
-		return
-	end
-
+	print "Warning!This will iterate over all the histories and evalualte each one.".colourize
 	while i < h.size
 		begin
 			exec = h[i].to_s.strip
@@ -257,8 +251,8 @@ def write_history(*arg)
 	nil
 end
 
-def printenv(*arg) puts ENV.each { |temp| puts "#{temp[0]} => #{temp[1]}".colourize } ; nil end
-def config(*arg) RbConfig::CONFIG.to_a.each { |c| puts "#{c[0]} => #{c[1]}".colourize } ; nil end
+def printenv(*arg) puts ENV.map { |temp| "#{temp[0]} => #{temp[1]}".colourize(false) } end
+def config(*arg) puts RbConfig::CONFIG.to_a.map { |c| "#{c[0]} => #{c[1]}".colourize(false) } end
 
 # Aliases
 alias clear! clear
