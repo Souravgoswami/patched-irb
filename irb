@@ -1,21 +1,22 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/env ruby
 # The GNU General Public License v3.0
-PATCH_VERSION_ = '0.2.1'
-%w(irb irb/completion io/console).each { |gem| require(gem) }
+PATCH_VERSION_ = '0.2.2'
+%w(irb io/console).each { |gem| require(gem) }
+require 'irb/completion' unless !not(ARGV.delete('-n')) | !not(ARGV.delete('--nocompletion'))
 
 STDOUT.sync = true
 
 # Handy QuickTools for quick calculations!
 module QuickTools
 	class << self
-		def colourize(arg) arg.to_s.colourize end
-		def sort_word(arg) arg.to_s.chars.sort.join end
-		def reverse_sort_word(arg) sort_word(arg).reverse end
-		def camelize(string) string.split(' ').map(&:capitalize).join(' ') end
-		def factorial(number) (2..number.to_i).reduce(:*) end
-		def permutation(argument) argument.to_s.chars.permutation.map(&:join) end
+		define_method(:colourize) { |arg| arg.to_s.colourize }
+		define_method(:sort_word) { |arg| arg.to_s.chars.sort.join }
+		define_method(:reverse_sort_word) { |arg| sort_word(arg).reverse }
+		define_method(:camelize) { |*args| args.map { |a| a.to_s.split.map(&:capitalize) }.join(' ') }
+		define_method(:factorial) { |number| (2..number.to_i).reduce(:*) }
+		define_method(:permutation) { |argument| argument.to_s.chars.permutation.map(&:join) }
 
-		def prime(range=100)
+		def prime(range = 100)
 			(numbers = (2..range).to_a.unshift(nil, nil)).each do |num|
 				next if num.nil?
 				return numbers.compact if (sqr = num ** 2) > range
@@ -23,15 +24,29 @@ module QuickTools
 			end
 		end
 
-		def prime?(n=19) prime(n).include?(n) end
+		def prime?(n = 19) prime(n).include?(n) end
 
 		def benchmark(*all_methods)
 			require 'benchmark' unless defined?(Benchmark)
-			all_methods.each { |method| Benchmark.benchmark { |b| b.report("#{method.to_s}") { eval(method.to_s) } } }
+			all_methods.each do |method|
+				if method.nil?
+					decorate <<~EOF
+						Uh Oh! Use :method_name instead of passing the method directly!"
+						Wrong: #{self}.benchmark(x, y)
+						Correct: #{self}.benchmark(:x, :y)
+						Correct: #{self}.benchmark('x', 'y')
+						Correct: #{self}.benchmark('#{self}.pi(3000)')
+					EOF
+				else
+					decorate "Measuring: #{method}"
+					Benchmark.benchmark { |b| b.report(":#{method}") { eval(method.to_s) } }
+				end
+				decorate '-' * Terminal_Width
+			end
 			nil
 		end
 
-		def pi(n=1_000)
+		def pi(n = 1_000)
 			q, r, t, k, m, x, str = 1, 0, 1, 1, 3, 3, ''
 
 			if 4 * q + r - t < m * t
@@ -85,10 +100,10 @@ end
 ####################################################
 
 # Check if the system is Linux / Termux or not
-unless /linux/ === RbConfig::CONFIG['host_os']
-	puts 'Uh Oh! This REPL is supported only by Linux.'
-	puts 'You may expect unexpected behaviour if you continue. Continue? (Y/n)'
-	exit! 100 if STDIN.getch == 'n'
+unless /linux/ === (os = RbConfig::CONFIG['host_os'])
+	puts "Uh Oh! This REPL is only for GNU/Linux system. The current OS seems to be #{os[0].to_s =~ (/[aeiouAEIOU]/) ? 'an' : 'a'} #{os}."
+	puts 'If you are using GNU/Linux you may continue or you may expect weird behaviour. Continue? (Y/n)'
+	STDIN.tty? ? (exit!(100) if STDIN.getch == 'n') : (exit!(100) if STDIN.gets.to_s.strip == 'n')
 end
 
 Kernel.define_method(:decorate) { |*a| puts a.map { |b| String === b ? b.colourize(false) : b.to_s.colourize(false) } }
@@ -110,11 +125,12 @@ if ARGV.include?('-h') || ARGV.include?('--help')
  		This is  a Patched IRB (Version #{PATCH_VERSION_}) for GNU/Linux systems aims to add more features on top of IRB.
 
 		Options:
-			-h / --help			Print help and exit
-			-i / --incognito		Don't write history at exit
-			--nohistory			Same as -i / --incognito
-			--noverbose			Turn off verbose mode
-			-v / --version			Print version and exit
+			-h / --help		Print help and exit
+			-i / --incognito	Don't write history at exit
+			-n / --nocompletion	Don't require completion
+			-v / --version		Print version and exit
+			--nohistory		Same as -i / --incognito
+			--noverbose		Turn off verbose mode
 
 		Example:
 			1. Load a file:
@@ -335,7 +351,7 @@ ARGV.clear
 
 IRB.start(__FILE__)
 
-# use exit! to avoid writing histories
+# use exit! to avoid writing histories or stay in incongnito mode!
 at_exit do
 	unless nohistory
 		etime = (Time.now - __t__).to_i
