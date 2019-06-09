@@ -12,7 +12,6 @@ Press the up arrow key and down arrow key to browse previous histories (as you w
 ### Methods:
 + clear: Right, `clear` clears the screen just like just like the Linux command! `clear` will also reset escape characters.  The method clr is aliased with `clear!`.
 
-
 + erase: It will erase the terminal except for the line you are in. It's aliased with `erase!`.
 
 + history: Show the histories from the .irb_history file. `history!` is also an alias for history method.
@@ -33,10 +32,14 @@ Press the up arrow key and down arrow key to browse previous histories (as you w
 
 + get_history_lines: Yet another test. It will print the total number of lines (to standard output) that .irb_history has. It has no alias.
 
++ decorate(\*args): The patched Kernel module's method decorate is just like puts but it will colourize your strings!
+
 **Note: You can easily override the above methods. You can do `clear = 5` and you can't use clear(). It will return 5. But We have aliased most of the methods so you can use them alternatively.**
 
 ## Patched String 🔡
-Yes, we have the String class monkey patched so you can use `colourize` method on every String object. `colourize` is aliased with `to_colour`.
+Yes, we have the String class monkey patched so you can use `colourize` method on every String object. `colourize` will print colour codes. Use Kernel#decorate(\*args) to colourize your strings without writing puts everytime.
+
+Be careful while using the patched methods. They are for convenience. Don't use it in production environments. Using, say,  String#colourize will only work with patched IRB unless you create it yourself!
 
 ## Module
 There's a module called QuickTools. You have various methods there:
@@ -53,9 +56,9 @@ There's a module called QuickTools. You have various methods there:
 
 ## Running 🎽
 You need to download the file, and run the irb. Use it in the way you feel comfortable.
-You may rename this and move that to /bin/ or /usr/share/bin/ or /opt/ directory.
+You may rename this and move to the /bin/ or /usr/share/bin/ or /opt/ directory.
 
-We would like to rename it and hide it by adding a `.` in front. And alias it with irb.
+We would like to move it to our home directory, and hide it by renaming it to `.irb`. And alias it with irb.
 
 Example:
 
