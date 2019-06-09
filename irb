@@ -1,6 +1,6 @@
 #!/usr/bin/ruby -w
 # The GNU General Public License v3.0
-PATCH_VERSION_ = '0.2.0'
+PATCH_VERSION_ = '0.2.1'
 %w(irb irb/completion io/console).each { |gem| require(gem) }
 
 STDOUT.sync = true
@@ -48,15 +48,13 @@ module QuickTools
 end
 
 class String
-	@@colour_set =  [ (34..39), (208..213), (70..75), (136..140), (214..219), (40..45),
-		[154, 184, 208, 203, 198, 164, 129, 92], [63, 33, 39, 44, 49, 83, 118],
-		[40,41,42,43,211, 210, 209, 208] ].map(&:to_a)
+	colour_set =  [[154, 184, 208, 203, 198, 164, 129, 92], [63, 33, 39, 44, 49, 83, 118], (34..39), (70..75), (214..219), (40..45),
+		[203, 198, 199, 164, 129, 93, 63, 33, 39, 44, 49, 48, 83, 118, 184, 214, 208]]
 
-	@@colour_set.concat(@@colour_set.map(&:reverse))
+	@@colour_set = colour_set.map { |i| i.to_a.dup.tap { |x| x.concat(x.reverse) } }.concat(colour_set.map { |y| y.to_a.reverse.tap { |z| z.concat(z.reverse) } })
 
 	def colourize(line_break=true, blink=false)
-		val = ''
-		val.concat("\e[5m") if blink
+		val = blink ? "\e[5m" : ''
 
 		each_line do |str|
 			colours = @@colour_set[0]
@@ -78,18 +76,58 @@ class String
 		val.chomp
 	end
 
-	alias to_colour colourize
+	def to_colour
+		Kernel.warn("String#to_colour is deprecated. Use String#colourize or Kernel#decorate('string') instead.")
+		colourize
+	end
 end
+
+####################################################
+
+# Check if the system is Linux / Termux or not
+unless /linux/ === RbConfig::CONFIG['host_os']
+	puts 'Uh Oh! This REPL is supported only by Linux.'
+	puts 'You may expect unexpected behaviour if you continue. Continue? (Y/n)'
+	exit! 100 if STDIN.getch == 'n'
+end
+
+Kernel.define_method(:decorate) { |*a| puts a.map { |b| String === b ? b.colourize(false) : b.to_s.colourize(false) } }
 
 ####################################################
 if ARGV.include?('-v') || ARGV.include?('--version')
-	print "IRB VERSION:\t#{IRB::VERSION}".colourize
-	print "IRB Patch Version: #{PATCH_VERSION_}".colourize
-	print  "Ruby Version #{RUBY_VERSION} #{RUBY_PLATFORM}".capitalize.colourize
+	decorate "IRB VERSION\t\t#{IRB::VERSION}"
+	decorate "IRB Patch Version\t#{PATCH_VERSION_}"
+	decorate "Ruby Version\t\t#{RUBY_VERSION}\t#{RUBY_PLATFORM}"
 	exit 0
 end
 
-####################################################
+if ARGV.include?('-h') || ARGV.include?('--help')
+	print "\e[2;3m"
+	decorate "Usage irb [options] [filename / gem name]\n"
+
+	decorate <<~EOF
+		IRB is Interactive Ruby, a REPL for the Ruby programming language.
+ 		This is  a Patched IRB (Version #{PATCH_VERSION_}) for GNU/Linux systems aims to add more features on top of IRB.
+
+		Options:
+			-h / --help			Print help and exit
+			-i / --incognito		Don't write history at exit
+			--nohistory			Same as -i / --incognito
+			--noverbose			Turn off verbose mode
+			-v / --version			Print version and exit
+
+		Example:
+			1. Load a file:
+				#{$PROGRAM_NAME} filename
+			2. Load gems:
+				#{$PROGRAM_NAME} open3 json time date io/console
+	EOF
+
+	exit! 0
+end
+
+nohistory = !not(ARGV.delete('--nohistory')) || !not(ARGV.delete('--incognito')) || !not(ARGV.delete('-i'))
+$VERBOSE = not(ARGV.delete('--noverbose'))
 
 __t__ = Time.now
 @__histfile__ = "#{ENV['HOME']}/.irb_history"
@@ -98,9 +136,11 @@ __t__ = Time.now
 begin
 	Terminal_Height, Terminal_Width = STDOUT.winsize
 rescue Errno::ENOTTY
-	puts "Inappropriate ioctl for device"
-	puts "You should run this in a terminal!".colourize
+	decorate "Inappropriate ioctl for device"
+	decorate "You should run this in a terminal!"
+	exit! 127
 rescue Exception
+	exit! 128
 end
 
 # Read histories from file, and append it to Readline::HISTORY to make the history available in the current session!
@@ -125,10 +165,10 @@ def erase(*arg)
 end
 
 # Get the histories. hist!(n) where the n implies the number of line.
-def hist!(n=1, return_value=false, *arg)
+def hist!(n = 1, return_value = false, *arg)
 	begin
 		data = File.readlines(@__histfile__)[n.to_i - 1]
-		unless return_value then puts data.to_s.colourize else return data end
+		return_value ? (return data) : decorate(data)
 
 	rescue Errno::ENOENT
 		puts "#{@__histfile__} doesn't exist".colourize
@@ -142,13 +182,13 @@ def hist!(n=1, return_value=false, *arg)
 	nil
 end
 
-def eval_hist!(n=1, *arg)
+def eval_hist!(n = 1, *arg)
 	line = hist!(n, true).to_s.strip
-	puts line.colourize
+	decorate line
 
 	if !(line.empty? || line.start_with?('eval_hist'))
 		Readline::HISTORY << line
-		eval(line)
+		Kernel.binding.eval(line)
 	elsif line.start_with?('eval_hist')
 		puts 'Uh oh! Calling method eval_history! recursively is not allowed.'.colourize
 	end
@@ -181,7 +221,7 @@ end
 def eval_all!
 	h, i = history(0, true), 0
 
-	print "Warning!This will iterate over all the histories and evalualte each one.".colourize
+	decorate "Warning! This will iterate over all the histories and evaluate each one."
 	while i < h.size
 		begin
 			exec = h[i].to_s.strip
@@ -191,44 +231,48 @@ def eval_all!
 				next
 			end
 
-			puts ("-" * Terminal_Width).colourize
-			print "#{sprintf("%02d", i + 1)}> #{exec}".colourize
-			print "\e[4m"
-			puts "[Press Any key to Continue. Press Space to skip]".colourize
+			puts "\n" * 2
+			print "#{sprintf("\e[1;34mevaluator(main):%03d", i + 1)}> "
+			print "\e[1m"
+			print "#{exec}".colourize
+			print "\e[3m"
+			decorate "[Press Any key to Continue, Space to skip, ^C / ^D to exit]"
 			print "\e[0m"
 
 			i += 1
 
-			if STDIN.getch == " "
+			case STDIN.getch
+			when ' '
 				print "Skipping...".colourize
 				next
+			when "\u0003", "\u0004"
+				break
 			end
 
 			print (val = eval(exec)) ? "=> #{val}".colourize : "=> nil".colourize
-			print ("-" * Terminal_Width).colourize
 
 		rescue Interrupt
 			exit! 0
 
 		rescue Exception => e
-			puts "\e[1;31m#{e}"
+			puts "\e[1;31m#{e}\e[0m"
 			i += 1
 			retry
 		end
 	end
 end
 
-def get_history_size(*arg) puts "#{File.size(@__histfile__).to_s.reverse.gsub(/\d{1,3}/).to_a.join(',').reverse} bytes".colourize if File.readable?(@__histfile__) end
-def get_history_lines(*arg) puts File.readlines(@__histfile__).count.to_s.colourize if File.readable?(@__histfile__) end
+define_method(:get_history_size) { decorate "#{File.size(@__histfile__).to_s.reverse.gsub(/\d{1,3}/).to_a.join(',').reverse} bytes" if File.readable?(@__histfile__) }
+define_method(:get_history_lines) { decorate File.readlines(@__histfile__).count.to_s.reverse.gsub(/\d{1,3}/).to_a.join(',').reverse if File.readable?(@__histfile__) }
 
 def delete_history(*arg)
 		if File.writable?(@__histfile__)
-			puts 'Remove history? (N/y)'.colourize
+			decorate 'Remove history? (N/y)'
 			if STDIN.gets.downcase.strip == 'y'
 				File.delete(@__histfile__)
-				puts "File #{@__histfile__} deleted".colourize
+				decorate "File #{@__histfile__} deleted"
 			else
-				puts "Not Deleted".colourize
+				decorate "Not Deleted"
 			end
 		else
 			puts "#{@__histfile__} doesn't exist. Nothing to do.".colourize
@@ -251,8 +295,8 @@ def write_history(*arg)
 	nil
 end
 
-def printenv(*arg) puts ENV.map { |temp| "#{temp[0]} => #{temp[1]}".colourize(false) } end
-def config(*arg) puts RbConfig::CONFIG.to_a.map { |c| "#{c[0]} => #{c[1]}".colourize(false) } end
+define_method(:printenv) { |*arg| puts ENV.map { |temp| "#{temp[0]} => #{temp[1]}".colourize(false) } }
+define_method(:config) { |*arg| puts RbConfig::CONFIG.to_a.map { |c| "#{c[0]} => #{c[1]}".colourize(false) } }
 
 # Aliases
 alias clear! clear
@@ -265,12 +309,13 @@ alias write_history! write_history
 # Check if ARGV[0] is a file or not. If that's a file, run it just like irb, or load ruby gems!
 if File.readable?(ARGV[0].to_s)
 	IRB.start(ARGV[0])
+	exit! 0
 else
 	# require gems from arguments!
 	ARGV.each_with_index { |gem, temp|
 		text = "require '#{gem}'"
-		print((sprintf("%02d  ", temp + 1) + text).colourize(false))
-		print ' ' * ((Terminal_Width/3 - text.length).abs + 1)
+		print((sprintf("gem(main):%03d:0> ", temp + 1) + text).colourize(false))
+		print ' ' * ((Terminal_Width / 3 - text.length).abs + 1)
 
 		print(
 			begin
@@ -292,8 +337,10 @@ IRB.start(__FILE__)
 
 # use exit! to avoid writing histories
 at_exit do
-	etime = (Time.now - __t__).to_i
-	hours, minutes, seconds = etime / 3600, etime % 3600 / 60, etime % 60
-	print "Exiting after #{hours} #{hours == 1 ? 'hour' : 'hours'} #{minutes} #{minutes == 1 ? 'minute' : 'minutes' } #{seconds} #{seconds == 1 ? 'second' : 'seconds' }.".colourize if etime > 0
-	write_history
+	unless nohistory
+		etime = (Time.now - __t__).to_i
+		hours, minutes, seconds = etime / 3600, etime % 3600 / 60, etime % 60
+		decorate "Exiting after #{hours} #{hours == 1 ? 'hour' : 'hours'} #{minutes} #{minutes == 1 ? 'minute' : 'minutes' } #{seconds} #{seconds == 1 ? 'second' : 'seconds' }." if etime > 0
+		write_history
+	end
 end
